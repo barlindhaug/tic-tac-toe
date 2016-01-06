@@ -6,18 +6,26 @@
 
 (enable-console-print!)
 
-(def board (repeat 3 (repeat 3 {:owner :none
-                                :id 1})))
-(defonce app-state (atom board))
+(def board (partition 3 (map (fn [id]
+       {:owner :none
+        :id id})
+     (range 9))))
+
+(def player :o)
+
+(defonce app-state (atom {:board board
+                          :player player}))
 
 (defn update-cell [id]
-  (println "update")
-  (swap! app-state (fn [board]
-                     (map (fn [row]
+  (swap! app-state (fn [state]
+                     {:board (map (fn [row]
                             (map (fn [cell]
-                                   (assoc cell :owner :o))
+                                   (if (= (:id cell) id)
+                                     (assoc cell :owner :o)
+                                     cell))
                                  row))
-                            board))))
+                            (:board state))
+                      :player (:player state)})))
 
 
 (q/defcomponent Cell [cell]
@@ -27,7 +35,6 @@
                         (when blank?
                           (update-cell (:id cell))))}
             (when blank? "_")
-            (println cell)
             (when (= (:owner cell) :o) "O"))))
 
 (q/defcomponent Row [row]
@@ -39,7 +46,7 @@
              (map #(Row %) board)))
 
 (defn render-game [container board]
-  (q/render (Table board) container))
+  (q/render (Table (:board board)) container))
 
 
 (render-game container @app-state)
