@@ -11,7 +11,13 @@
         :id id})
      (range 9))))
 
-(def player :o)
+(def players [:o :x])
+
+(def player (first players))
+
+(defn next-player [players player]
+  (println players player)
+  (first (filter #(not= % player) players)))
 
 (defonce app-state (atom {:board board
                           :player player}))
@@ -21,11 +27,11 @@
                      {:board (map (fn [row]
                             (map (fn [cell]
                                    (if (= (:id cell) id)
-                                     (assoc cell :owner :o)
+                                     (assoc cell :owner (:player state))
                                      cell))
                                  row))
                             (:board state))
-                      :player (:player state)})))
+                      :player (next-player players (:player state))})))
 
 
 (q/defcomponent Cell [cell]
@@ -35,7 +41,8 @@
                         (when blank?
                           (update-cell (:id cell))))}
             (when blank? "_")
-            (when (= (:owner cell) :o) "O"))))
+            (when (= (:owner cell) :o) "O")
+            (when (= (:owner cell) :x) "X"))))
 
 (q/defcomponent Row [row]
   (dom/tr {}
@@ -45,8 +52,13 @@
   (dom/table {}
              (map #(Row %) board)))
 
-(defn render-game [container board]
-  (q/render (Table (:board board)) container))
+(q/defcomponent Game [state]
+  (dom/div {}
+           (dom/h2 {} (str "Current player: " (name (:player state))))
+           (Table (:board state))))
+
+(defn render-game [container state]
+  (q/render (Game state) container))
 
 
 (render-game container @app-state)
