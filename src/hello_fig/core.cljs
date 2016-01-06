@@ -16,21 +16,22 @@
 (def player (first players))
 
 (defn next-player [players player]
-  (println players player)
   (first (filter #(not= % player) players)))
+
+(defn select-cell [{board :board current-player :player} id]
+  (map (fn [row]
+         (map (fn [cell]
+                (if (= (:id cell) id)
+                  (assoc cell :owner current-player)
+                  cell))
+              row)) board))
 
 (defonce app-state (atom {:board board
                           :player player}))
 
 (defn update-cell [id]
   (swap! app-state (fn [state]
-                     {:board (map (fn [row]
-                            (map (fn [cell]
-                                   (if (= (:id cell) id)
-                                     (assoc cell :owner (:player state))
-                                     cell))
-                                 row))
-                            (:board state))
+                     {:board (select-cell state id)
                       :player (next-player players (:player state))})))
 
 
