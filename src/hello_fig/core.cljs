@@ -34,6 +34,17 @@
                      {:board (select-cell state id)
                       :player (next-player players (:player state))})))
 
+(defn get-owner-from-cell-id [board id]
+  (:owner (first (mapcat (fn [row]
+                (filter #(= id (:id %)) row))
+                board))))
+
+(defn check-for-winner [{board :board}]
+  (when (and
+         (= (get-owner-from-cell-id board 0) (get-owner-from-cell-id board 4) (get-owner-from-cell-id board 8))
+         (not= (get-owner-from-cell-id board 0) :none))
+    (get-owner-from-cell-id board 0)))
+
 
 (q/defcomponent Cell [cell]
   (let [blank? (= (:owner cell) :none)]
@@ -56,14 +67,15 @@
 (q/defcomponent Game [state]
   (dom/div {}
            (dom/h2 {} (str "Current player: " (name (:player state))))
-           (Table (:board state))))
+           (Table (:board state))
+           (when-let [winner (check-for-winner state)]
+             (dom/h2 {} (str "Winner: " (name winner))))))
 
 (defn render-game [container state]
   (q/render (Game state) container))
 
 
 (render-game container @app-state)
-
 
 (add-watch app-state :watch
            (fn [_ _ _ new-state]
