@@ -15,6 +15,13 @@
 
 (def player (first players))
 
+
+(def winning-lines [[0 1 2] [3 4 5] [6 7 8] ;horizontal
+                    [0 3 6] [1 4 7] [2 5 8] ;vertical
+                    [0 4 8] [2 4 6] ;diagonals
+                    ])
+
+
 (defn next-player [players player]
   (first (filter #(not= % player) players)))
 
@@ -39,12 +46,18 @@
                 (filter #(= id (:id %)) row))
                 board))))
 
-(defn check-for-winner [{board :board}]
-  (when (and
-         (= (get-owner-from-cell-id board 0) (get-owner-from-cell-id board 4) (get-owner-from-cell-id board 8))
-         (not= (get-owner-from-cell-id board 0) :none))
-    (get-owner-from-cell-id board 0)))
+(defn winner? [board winning-line]
+  (when
+    (and
+     (apply = (map #(get-owner-from-cell-id board %) winning-line))
+     (not= (get-owner-from-cell-id board (first winning-line)) :none))
+   (get-owner-from-cell-id board (first winning-line))))
 
+
+(defn check-for-winner [{board :board} winning-lines]
+  (first
+   (remove nil?
+    (map #(winner? board %) winning-lines))))
 
 (q/defcomponent Cell [cell]
   (let [blank? (= (:owner cell) :none)]
@@ -68,7 +81,7 @@
   (dom/div {}
            (dom/h2 {} (str "Current player: " (name (:player state))))
            (Table (:board state))
-           (when-let [winner (check-for-winner state)]
+           (when-let [winner (check-for-winner state winning-lines)]
              (dom/h2 {} (str "Winner: " (name winner))))))
 
 (defn render-game [container state]
